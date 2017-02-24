@@ -1,117 +1,132 @@
-smartdoc-middleware
+# smartdoc-middleware
 
 Smartdoc is an RESTful document generator according to document-style comment.
 
-How it works
+Smartdoc是一个基于文档化注释的RESTful文档生成器，同时也包括一个浏览接口的网页。
 
-It will read your API-document-sytle comments of service functions by AST, and generate an declaration datafile about your APIs, then host an document page at the route path your mount this middleware.
+[(Poor) English version](https://github.com/linkeo/smartdoc-middleware/blob/master/README.eng.md)
 
- Table of Contents smartdoc-middlewareHow it worksUsage1. Install2. Basic Usage3. Writing API-Document CommentsFeaturesTodo
+### 如何工作
 
-Usage
+Smartdoc通过AST读取接口目录下所有的API文档化注释，生成一个描述接口的数据文件，然后在中间件的挂载目录上提供一个网页，用来查看文档和测试接口。
 
-1. Install
+[TOC]
 
-    npm install --save smartdoc-middleware
+## 用法
 
-2. Basic Usage
+### 1. 安装
 
-For example, we have an project like this:
+```bash
+npm install --save smartdoc-middleware
+```
 
-    - index.js
-    + services // The directory where api functions defined in.
-      - user.js
-      - post.js
-      - ...
+### 2. 引入中间件
 
-And you've commented these service functions correctly. (See below)
+例如有如下的项目结构：
 
-Then, you can easily extend your app with smartdoc:
+```
+- index.js
++ services // The directory where api functions defined in.
+  - user.js
+  - post.js
+  - ...
+```
 
-    // index.js
-    const app = require('express')();
-    const smartdoc = require('smartdoc-middleware');
-    const pathToServices = path.join('../services');
-    // ...
-    app.use('/doc', smartdoc(pathToServices));
-    // ...
-    app.listen(3000);
+而且，services里面的接口方法都已经写好了文档化注释。
 
-Then, you will able to access the document page at http://localhost:3000/doc.
+然后就可以在Express中引用：
 
-3. Writing API-Document Comments
+```js
+// index.js
+const app = require('express')();
+const smartdoc = require('smartdoc-middleware');
+const pathToServices = path.join('../services');
+// ...
+app.use('/doc', smartdoc(pathToServices));
+// ...
+app.listen(3000);
+```
 
-First, you should declare an app like this (In any file inside the services folder, generally, services/index.js):
+然后启动服务器，就可以用`http://localhost:3000/doc`访问文档页面了.
 
-    // services/index.js
-    /**
-     * Example Application
-     * @application example-app
-     *
-     * @author linkeo
-     * @version 0.0.1
-     */
-    module.exports = {};
+### 3. 编写文档化注释
 
-Notice: To declare an Application, @application [name] is necessary.
+首先需要在services目录里定义Application（任意文件都可以，但是推荐在index.js中）
 
-Then, in every service modules, declare your APIs.
+```js
+// services/index.js
+/**
+ * 示例应用
+ * @application example-app
+ *
+ * @author linkeo
+ * @version 0.0.1
+ */
+module.exports = {};
+```
 
-    // services/user.js
+>   **注意:**  `@application [name]` 是定义Application的必须条件
 
-    /**
-     * User Services
-     * @module user
-     * @path /user
-     */
-    module.exports = class UserService {
+然后在接口模块文件中定义模块和接口：
 
-      /**
-       * User Login
-       *
-       * @note If success, will set cookies with response.
-       *
-       * @route {post} /login
-       * @param {String} account Phone or email of the user
-       * @param {String} password
-       * @param {String} from Where the user logins, can be 'app', 'web'
-       * @return {Object} An object contains user information
-       */
-      *login(req, res) {
-        //...
-      }
-    }
+```js
+// services/user.js
 
-Notice: To declare a Module, @module [name] is necessary.
+/**
+ * 用户模块
+ * @module user
+ * @path /user
+ */
+module.exports = class UserService {
 
-Notice: To declare an Action, @route [method] [path] is necessary.
+  /**
+   * 用户登录
+   *
+   * @note 登陆成功时会在响应中设置cookie
+   *
+   * @route {post} /login
+   * @param {String} account 用户的手机号或邮箱
+   * @param {String} password
+   * @param {String} from 登陆的位置，可以是 'app', 'web'
+   * @return {Object} 用户信息
+   */
+  *login(req, res) {
+    //...
+  }
+}
+```
 
-Then, you will get an API declaration structure like this:
+>   **注意:**  `@module [name]` 是定义Module的必须条件
+>
+>   **注意:**  `@route [method] [path]` 是定义Action的必须条件
 
-    name: example-app
-    title: Example Application
-    modules:
-      - name: user-674e7e
-        title: User Services
-        path: /user
-        actions:
-          - name: post-login-768ed4
-          	title: User Login
-          	route:
-          	  method: post
-          	  path: /login
-          	params: ...
+解析出来的结构描述文件大致如下：
+
+```yaml
+name: example-app
+title: Example Application
+modules:
+  - name: user-674e7e
+    title: User Services
+    path: /user
+    actions:
+      - name: post-login-768ed4
+        title: User Login
+        route:
+          method: post
+          path: /login
+        params: ...
+```
 
 
 
-Features
+## 功能
 
--   Read document-style comment of RESTful interface.
--   Serve a single-page application to display informations about your interfaces, e.g. method, path, params.
--   Can send request to test your interface.
+- 读取RESTful风格的文档化注释
+- 提供一个单页应用，用于查看和测试接口。
 
-Todo
+## Todo
 
-- [ ] More powerful request, with custom headers, cookies, etc.
-- [ ] Support Environment, a scope to store some variables.
-- [ ] Custom code, will run after response received.
+- [ ] 更丰富的请求设置
+- [ ] 可以提供一个沙箱环境，保存一些请求用的变量
+- [ ] 可以在沙箱环境中执行接口测试代码
