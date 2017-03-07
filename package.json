@@ -1,6 +1,6 @@
 {
   "name": "smartdoc-middleware",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Smartdoc is an RESTful document generator according to document-style comment",
   "main": "index.js",
   "scripts": {
